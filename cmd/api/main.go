@@ -2,47 +2,52 @@ package main
 
 import (
 	"context"
-	"log"
 	"net/http"
+	"os"
 	"time"
 
+	"github.com/aryansaud-80/rosterpulse/internal/app"
 	"github.com/aryansaud-80/rosterpulse/internal/config"
-	"github.com/aryansaud-80/rosterpulse/internal/db"
-	"github.com/aryansaud-80/rosterpulse/internal/handlers"
+	"github.com/aryansaud-80/rosterpulse/internal/middleware"
+	"github.com/aryansaud-80/rosterpulse/internal/platform/db"
+	"github.com/aryansaud-80/rosterpulse/internal/platform/logger"
 )
 
 func main() {
 	cfg := config.MustLoad()
+	log := logger.NewLogger()
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	pool, err := db.Connect(ctx, cfg.DATABASE_URL)
 	if err != nil {
-		log.Fatalf("could not connect to database: %v", err)
+		log.Error("could not connect to database", "error", err)
+		os.Exit(1)
 	}
 
-	log.Printf("connected to database")
+	log.Info("connected to database")
 
 	defer pool.Close()
 
-	log.Printf("server starting ....")
+	log.Info("server starting ....")
 
-	mux := http.NewServeMux()
-	mux.HandleFunc("GET /healthz", handlers.Health)
+    srvContainer := app.NewServer(pool, log)
+
+	logger := middleware.RequestLogger(log)(srvContainer.Router)
 
 	srv := &http.Server{
 		Addr:         ":" + cfg.Port,
-		Handler:      mux,
+		Handler:      logger,
 		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 10 * time.Second,
 		IdleTimeout:  15 * time.Second,
 	}
 
-	log.Printf("server is listening on %s", srv.Addr)
+	log.Info("server is listening", "address", srv.Addr)
 
 	if err := srv.ListenAndServe(); err != nil {
-		log.Fatalf("could not listen on %s due to %s", srv.Addr, err.Error())
+		log.Error("could not listen on server", "addr", srv.Addr, "error", err)
+		os.Exit(1)
 	}
-
 }
