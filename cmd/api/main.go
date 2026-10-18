@@ -32,13 +32,14 @@ func main() {
 
 	log.Info("server starting ....")
 
-    srvContainer := app.NewServer(pool, log)
+	srvContainer := app.NewServer(pool, log)
 
-	logger := middleware.RequestLogger(log)(srvContainer.Router)
+	loggerHandler := middleware.RequestLogger(log)(srvContainer.Router)
+	finalHandler := middleware.RequestId(loggerHandler)
 
 	srv := &http.Server{
 		Addr:         ":" + cfg.Port,
-		Handler:      logger,
+		Handler:      finalHandler,
 		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 10 * time.Second,
 		IdleTimeout:  15 * time.Second,

@@ -8,7 +8,7 @@ import (
 
 type responseWriter struct {
 	http.ResponseWriter
-	status  int
+	status      int
 	wroteHeader bool
 }
 
@@ -21,8 +21,7 @@ func (rw *responseWriter) WriteHeader(code int) {
 	rw.ResponseWriter.WriteHeader(code)
 }
 
-
-func (rw *responseWriter) Write(b []byte) (int, error){
+func (rw *responseWriter) Write(b []byte) (int, error) {
 	if !rw.wroteHeader {
 		rw.ResponseWriter.WriteHeader(http.StatusOK)
 	}
@@ -30,22 +29,24 @@ func (rw *responseWriter) Write(b []byte) (int, error){
 	return rw.ResponseWriter.Write(b)
 }
 
-
 func RequestLogger(log *slog.Logger) func(http.Handler) http.Handler {
-	return func(next http.Handler) http.Handler{
+	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			start := time.Now()
 
 			wrappped := &responseWriter{
 				ResponseWriter: w,
-				status:     http.StatusOK,
+				status:         http.StatusOK,
 			}
 
 			next.ServeHTTP(wrappped, r)
 
 			duration := time.Since(start)
 
+			requestId := GetRequestIdFromContext(r.Context())
+
 			log.Info("HTTP requst processed",
+				"request_id", requestId,
 				"method", r.Method,
 				"path", r.URL.Path,
 				"status", wrappped.status,

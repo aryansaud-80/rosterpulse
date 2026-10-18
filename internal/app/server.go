@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/aryansaud-80/rosterpulse/internal/handlers"
+	"github.com/aryansaud-80/rosterpulse/internal/user"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -23,7 +24,12 @@ func NewServer(db *pgxpool.Pool, log *slog.Logger) *Server {
 		log:    log,
 	}
 
+	userRepo := user.NewUserRepository(db, log)
+	userService := user.NewUserService(userRepo, log)
+	userHandler := user.NewUserHandler(userService, log)
+
 	mux.HandleFunc("GET /healthz", handlers.Health)
+	mux.HandleFunc("POST /api/users", userHandler.Register)
 
 	return s
 }
