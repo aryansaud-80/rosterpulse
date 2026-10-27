@@ -32,7 +32,7 @@ func main() {
 
 	log.Info("server starting ....")
 
-	srvContainer := app.NewServer(pool, log)
+	srvContainer := app.NewServer(pool, log, &cfg)
 
 	loggerHandler := middleware.RequestLogger(log)(srvContainer.Router)
 	finalHandler := middleware.RequestId(loggerHandler)
