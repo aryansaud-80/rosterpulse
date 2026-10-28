@@ -61,7 +61,7 @@ func (tm *TokenManager) GenerateAccessToken(userID, sessionID string, tokenVersi
 	return token.SignedString([]byte(tm.secretKey))
 }
 
-func (tm *TokenManager) ValidateAccessToken(tokenStr string) (*Claims, error) {
+func (tm *TokenManager) ValidateAccessToken(tokenStr string) (any, error) {
 	token, err := jwt.ParseWithClaims(
 		tokenStr,
 		&Claims{},

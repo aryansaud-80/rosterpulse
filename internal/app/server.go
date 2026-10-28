@@ -7,6 +7,7 @@ import (
 	"github.com/aryansaud-80/rosterpulse/internal/auth"
 	"github.com/aryansaud-80/rosterpulse/internal/config"
 	"github.com/aryansaud-80/rosterpulse/internal/handlers"
+	"github.com/aryansaud-80/rosterpulse/internal/middleware"
 	"github.com/aryansaud-80/rosterpulse/internal/user"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -31,7 +32,18 @@ func NewServer(db *pgxpool.Pool, log *slog.Logger, cfg *config.Config) *Server {
 	mux.HandleFunc("GET /healthz", handlers.Health)
 
 	userRepo := user.RegisterUserModule(mux, db, log)
-	auth.RegisterAuthModule(mux, db, userRepo, log, cfg)
+
+	tokenManager := auth.NewTokenManager(
+		cfg.JWT.SecretKey,
+		cfg.JWT.Issuer,
+		cfg.JWT.Audience,
+		cfg.JWT.AccessTokenDuration,
+		cfg.JWT.RefreshTokenDuration,
+	)
+
+	authMw := middleware.AuthMiddleware(tokenManager)
+
+	auth.RegisterAuthModule(mux, db, userRepo, log, cfg, tokenManager, authMw)
 
 	return s
 }

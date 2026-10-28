@@ -16,6 +16,7 @@ const (
 	ErrCodeInternal       ErrorCode = "INTERNAL_ERROR"
 	ErrCodeValidation     ErrorCode = "VALIDATION_ERROR"
 	ErrCodeInvalidPayload ErrorCode = "INVALID_PAYLOAD"
+	ErrBadRequest         ErrorCode = "BAD_REQUEST"
 )
 
 type ErrorEnvelope struct {
@@ -23,8 +24,8 @@ type ErrorEnvelope struct {
 }
 
 type ErrorResponse struct {
-	Message string    `json:"message"`
-	Code    ErrorCode `json:"code"`
+	Message string            `json:"message"`
+	Code    ErrorCode         `json:"code"`
 	Fields  map[string]string `json:"fields,omitempty"`
 }
 

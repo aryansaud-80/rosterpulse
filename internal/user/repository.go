@@ -13,6 +13,7 @@ import (
 type Iuser interface {
 	Create(ctx context.Context, record *UserRecord) (*UserRecord, error)
 	FindByEmail(ctx context.Context, normalizedEmail string) (*UserRecord, error)
+	FindById(ctx context.Context, id string) (*UserRecord, error)
 }
 
 type UserRepository struct {
@@ -80,4 +81,35 @@ func (r *UserRepository) FindByEmail(ctx context.Context, normalizedEmail string
 		return nil, fmt.Errorf("database query failed: %w", err)
 	}
 	return &record, nil
+}
+
+func (r *UserRepository) FindById(ctx context.Context, id string) (*UserRecord, error) {
+	query := `SELECT id, email, normalized_email,password_hash, role, status, created_at, updated_at, deleted_at
+	FROM users WHERE id=$1 AND status='ACTIVE'`
+
+	var record UserRecord
+
+	err := r.db.QueryRow(ctx, query, id).Scan(
+		&record.ID,
+		&record.Email,
+		&record.NormalizedEmail,
+		&record.PasswordHash,
+		&record.Role,
+		&record.Status,
+		&record.CreatedAt,
+		&record.UpdatedAt,
+		&record.DeletedAt,
+	)
+
+	if err != nil {
+        if errors.Is(err, pgx.ErrNoRows) {
+            r.log.Debug("user not found by id", "user_id", id)
+            return nil, ErrUserNotFound
+        }
+        
+        r.log.Error("failed to query user by id", "user_id", id, "error", err)
+        return nil, fmt.Errorf("failed to fetch user by id [%s]: %w", id, err)
+    }
+
+    return &record, nil
 }

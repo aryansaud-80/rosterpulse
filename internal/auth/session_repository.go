@@ -5,25 +5,49 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"time"
 
+	"github.com/aryansaud-80/rosterpulse/internal/platform/exec"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type ISessionRepo interface {
 	CreateSession(ctx context.Context, session *Session) (*Session, error)
-	GetSessionByTokenHash(ctx context.Context, tokenHash string) (*SessionRecord, error)
+	FindByHash(ctx context.Context, tokenHash string) (*SessionRecord, error)
+	RevokeAndUpdateLastUsed(ctx context.Context, sessionId string, t time.Time) error
+
+	BeginTx(ctx context.Context) (pgx.Tx, error)
+	WithTx(tx pgx.Tx) ISessionRepo
 }
 
 type SessionRepository struct {
-	db  *pgxpool.Pool
-	log *slog.Logger
+	pool *pgxpool.Pool
+	db   exec.DBExecutor
+	log  *slog.Logger
 }
 
-func NewSessionRepository(db *pgxpool.Pool, log *slog.Logger) *SessionRepository {
+func NewSessionRepository(pool *pgxpool.Pool, log *slog.Logger) *SessionRepository {
 	return &SessionRepository{
-		db:  db,
-		log: log.With("component", "auth.session_repository"),
+		pool: pool,
+		db:   pool,
+		log:  log.With("component", "auth.session_repository"),
+	}
+}
+
+func (r *SessionRepository) BeginTx(ctx context.Context) (pgx.Tx, error) {
+	tx, err := r.pool.Begin(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return tx, nil
+}
+
+func (r *SessionRepository) WithTx(tx pgx.Tx) ISessionRepo {
+	return &SessionRepository{
+		pool: r.pool,
+		db:   tx,
+		log:  r.log,
 	}
 }
 
@@ -53,7 +77,7 @@ func (r *SessionRepository) CreateSession(ctx context.Context, session *Session)
 	return session, nil
 }
 
-func (r *SessionRepository) GetSessionByTokenHash(ctx context.Context, tokenHash string) (*SessionRecord, error) {
+func (r *SessionRepository) FindByHash(ctx context.Context, tokenHash string) (*SessionRecord, error) {
 	query := `SELECT id, user_id, refresh_token_hash, token_version, expires_at, revoked_at, created_at, last_used_at
 	FROM sessions WHERE refresh_token_hash=$1`
 
@@ -79,4 +103,16 @@ func (r *SessionRepository) GetSessionByTokenHash(ctx context.Context, tokenHash
 	}
 
 	return &record, nil
+}
+
+func (r *SessionRepository) RevokeAndUpdateLastUsed(ctx context.Context, sessionId string, t time.Time) error {
+	query := `UPDATE sessions SET revoked_at=$1, last_used_at=$2 WHERE id=$3`
+
+	_, err := r.db.Exec(ctx, query, t, t, sessionId)
+	if err != nil {
+		r.log.Error("failed to revoke and update session last used", "error", err)
+		return fmt.Errorf("failed to execute session update: %w", err)
+	}
+
+	return nil
 }
