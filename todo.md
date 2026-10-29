@@ -1,17 +1,24 @@
 # RosterPulse TODO
 
-## 🔐 Auth Core & Flow (Completed)
+## 🚀 Next Up (Tomorrow's Sprint)
 
-- [x] Password hashing (`bcrypt`) and validation
-- [x] Token manager (`JWT` access tokens + SHA-256 refresh tokens)
-- [x] Session repository database operations with `DBExecutor` / transaction support
-- [x] Login handler and `HttpOnly` cookie setup
-- [x] `authMiddleware` for token validation & context injection
-- [x] `GET /api/v1/auth/me` (Profile endpoint)
-- [x] `POST /api/v1/auth/refresh` (Atomic session rotation & new token issuance)
-- [x] `POST /api/v1/auth/logout` (Session revocation & secure cookie cleanup)
+### Part 1: Player Profile APIs (`/api/player/profile`)
+- [ ] Register guarded endpoints:
+  - [ ] `POST /api/player/profile` (Create logged-in player's profile)
+  - [ ] `GET /api/player/profile/me` (Get my profile)
+  - [ ] `PATCH /api/player/profile/me` (Update my profile)
+  - [ ] `GET /api/players/{playerID}` (View public player profile)
 
-## 🚀 Next Up
+### Part 2: Player Game Profile APIs (`/api/player/game-profiles`)
+- [ ] Register guarded endpoints:
+  - [ ] `POST /api/player/game-profiles`
+  - [ ] `GET /api/player/game-profiles`
+  - [ ] `GET /api/player/game-profiles/{id}`
+  - [ ] `PATCH /api/player/game-profiles/{id}`
+  - [ ] `DELETE /api/player/game-profiles/{id}`
 
-- [ ] Create `internal/games` module (`GET /api/v1/games` & `GET /api/v1/games/{gameid}`)
-- [ ] Implement game service, repository, and guarded route handlers using `authMiddleware`
+### Part 3: Postman Testing & Verification (0/11 Checklist)
+- [ ] Verify profile creation, duplicate blocking, and updates for authenticated players
+- [ ] Verify role restrictions (organization accounts blocked from player profile management)
+- [ ] Test game profile validation against active/inactive games
+- [ ] Confirm strict cross-player ownership security (Player A cannot access Player B's private records)

@@ -6,6 +6,7 @@ import (
 
 	"github.com/aryansaud-80/rosterpulse/internal/auth"
 	"github.com/aryansaud-80/rosterpulse/internal/config"
+	"github.com/aryansaud-80/rosterpulse/internal/games"
 	"github.com/aryansaud-80/rosterpulse/internal/handlers"
 	"github.com/aryansaud-80/rosterpulse/internal/middleware"
 	"github.com/aryansaud-80/rosterpulse/internal/user"
@@ -44,6 +45,8 @@ func NewServer(db *pgxpool.Pool, log *slog.Logger, cfg *config.Config) *Server {
 	authMw := middleware.AuthMiddleware(tokenManager)
 
 	auth.RegisterAuthModule(mux, db, userRepo, log, cfg, tokenManager, authMw)
+
+	games.RegisterGameModule(mux, db, log)
 
 	return s
 }
