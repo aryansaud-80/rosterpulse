@@ -9,6 +9,7 @@ import (
 	"github.com/aryansaud-80/rosterpulse/internal/games"
 	"github.com/aryansaud-80/rosterpulse/internal/handlers"
 	"github.com/aryansaud-80/rosterpulse/internal/middleware"
+	"github.com/aryansaud-80/rosterpulse/internal/player/profile"
 	"github.com/aryansaud-80/rosterpulse/internal/user"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -47,6 +48,8 @@ func NewServer(db *pgxpool.Pool, log *slog.Logger, cfg *config.Config) *Server {
 	auth.RegisterAuthModule(mux, db, userRepo, log, cfg, tokenManager, authMw)
 
 	games.RegisterGameModule(mux, db, log)
+
+	profile.RegisterPlayerModule(mux, db, log, authMw)
 
 	return s
 }

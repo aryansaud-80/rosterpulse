@@ -5,10 +5,8 @@ import (
 	"errors"
 	"log/slog"
 	"net/http"
-	"strings"
 	"time"
 
-	"github.com/aryansaud-80/rosterpulse/internal/middleware"
 	"github.com/aryansaud-80/rosterpulse/internal/shared/httpx"
 	"github.com/aryansaud-80/rosterpulse/internal/shared/validator"
 )
@@ -76,23 +74,9 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *AuthHandler) Me(w http.ResponseWriter, r *http.Request) {
-	rawClaims, ok := middleware.ClaimsFromContext(r.Context())
-	if !ok {
-		httpx.Error(w, http.StatusUnauthorized, "unauthorized", httpx.ErrCodeUnauthorized)
-		return
-	}
-
-	claims, ok := rawClaims.(*Claims)
-	if !ok {
-		h.log.Warn("failed to type assert claims from context", "actual_type", "rawClaims", rawClaims)
-		httpx.Error(w, http.StatusUnauthorized, "invalid token claims", httpx.ErrCodeUnauthorized)
-		return
-	}
-
-	userID := claims.UserID
-	if strings.TrimSpace(userID) == "" {
-		h.log.Warn("user id is empty within valid token claims")
-		httpx.Error(w, http.StatusUnauthorized, "invalid token claims: missing user id", httpx.ErrCodeUnauthorized)
+	userID, err := UserIDFromContext(r.Context())
+	if err != nil {
+		httpx.Error(w, http.StatusUnauthorized, "Unauthorized", httpx.ErrCodeUnauthorized)
 		return
 	}
 

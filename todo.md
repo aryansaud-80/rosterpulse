@@ -3,11 +3,11 @@
 ## 🚀 Next Up (Tomorrow's Sprint)
 
 ### Part 1: Player Profile APIs (`/api/player/profile`)
-- [ ] Register guarded endpoints:
-  - [ ] `POST /api/player/profile` (Create logged-in player's profile)
-  - [ ] `GET /api/player/profile/me` (Get my profile)
-  - [ ] `PATCH /api/player/profile/me` (Update my profile)
-  - [ ] `GET /api/players/{playerID}` (View public player profile)
+- [x] Register guarded endpoints:
+  - [x] `POST /api/player/profile` (Create logged-in player's profile)
+  - [x] `GET /api/player/profile/me` (Get my profile)
+  - [x] `PATCH /api/player/profile/me` (Update my profile)
+  - [x] `GET /api/players/{playerID}` (View public player profile)
 
 ### Part 2: Player Game Profile APIs (`/api/player/game-profiles`)
 - [ ] Register guarded endpoints:
